@@ -1,7 +1,7 @@
 import datetime
 import time
 import re
-from UserList import UserList
+from collections import UserList
 from .errors import IpernityError
 from .reflection import call, static_call, AutoDoc
 
@@ -87,7 +87,7 @@ def _str2bool(s):
 def _dict_str2int(d, recurse=True):
     ''' convert string to int, traverse dict '''
     for k, v in d.items():
-        if (isinstance(v, unicode) or isinstance(v, str)) and v.isdigit():
+        if (isinstance(v, str)) and v.isdigit():
             d[k] = int(v)
         elif recurse:
             if isinstance(v, dict):
@@ -562,10 +562,10 @@ class Doc(IpernityObject):
     def getVisitors(self, **kwargs):
         return kwargs, _format_result_visitors
 
-    def replace(self, file, async=False):
+    def replace(self, file, async_=False):
         ''' replace doc with new file '''
-        tk = Upload.replace(doc=self, file=file, async=async)
-        if async:
+        tk = Upload.replace(doc=self, file=file, async_=async_)
+        if async_:
             tk.wait_done()
 
     @static_call('doc.search')

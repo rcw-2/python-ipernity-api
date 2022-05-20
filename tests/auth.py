@@ -12,12 +12,12 @@ class AuthTest(TestCase):
         auth.AuthHandler(perms=perms)
         # wrong perms type should raise exception
         perms['unknown'] = 'unkonwn'
-        with self.assertRaisesRegexp(auth.AuthError, 'permission type'):
+        with self.assertRaisesRegex(auth.AuthError, 'permission type'):
             auth.AuthHandler(perms=perms)
         perms.pop('unknown')
         # wrong perms mode should also raise exception
         perms['blog'] = 'wrong_mode'
-        with self.assertRaisesRegexp(auth.AuthError, 'permission mode'):
+        with self.assertRaisesRegex(auth.AuthError, 'permission mode'):
             auth.AuthHandler(perms=perms)
         perms.pop('blog')
 
@@ -28,7 +28,7 @@ class AuthTest(TestCase):
             url = handler.get_auth_url()
             self.assertIsNotNone(url)
 
-        test_class(auth.WebAuthHanlder)
+        test_class(auth.WebAuthHandler)
         test_class(auth.DesktopAuthHandler)
 
     def test_authed_request(self):
@@ -63,7 +63,7 @@ class AuthTest(TestCase):
         new_hdlr = auth.AuthHandler.load(self.oauth_file)
         self.assertIsNotNone(new_hdlr)
 
-    def _test_desktop_auth(self):
+    def test_desktop_auth(self):
         perms = {'doc': 'write'}
         fpath = self.oauth_file
         #TODO: web said frob is invalid, wired

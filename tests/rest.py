@@ -9,7 +9,7 @@ class RESTTest(TestCase):
         echo = 'hello'
 
         resp = rest.call_api(method, echo=echo)
-        self.assertEquals(resp['echo'], echo)
+        self.assertEqual(resp['echo'], echo)
 
     def test_call_api_raise(self):
         with self.assertRaises(errors.IpernityAPIError):
@@ -25,7 +25,7 @@ class RESTTest(TestCase):
         method = 'test.hello'
         # set keys to None, should raise exception
         keys.set_keys(None, None)
-        with self.assertRaisesRegexp(errors.IpernityError,
+        with self.assertRaisesRegex(errors.IpernityError,
                                      'No Ipernity API keys'):
             rest.call_api(method)
 
@@ -42,7 +42,7 @@ class RESTTest(TestCase):
         auth.set_auth_handler(None)
         # calling to a signed method without signed request
         # should recive exception
-        with self.assertRaisesRegexp(errors.IpernityAPIError, 'Signature'):
+        with self.assertRaisesRegex(errors.IpernityAPIError, 'Signature'):
             rest.call_api(method)
 
         # this time should OK
@@ -52,6 +52,6 @@ class RESTTest(TestCase):
     def test_get_request_cache(self):
         method = 'test.hello'
         rest.enable_cache()
-        for i in xrange(20):
+        for i in range(20):
             rest.call_api(method, http_post=False)
         rest.disable_cache()

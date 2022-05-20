@@ -25,6 +25,7 @@ In the case of an authentication request for a desktop application, a frob param
 http://www.ipernity.com/apps/authorize?api_key=[api_key]&perm_X=[perm]&frob=[frob]&api_sig=[api_sig]
 
 '''
+import logging
 import urllib
 import json
 from abc import abstractmethod
@@ -32,12 +33,15 @@ from . import keys
 from . import rest
 from .ipernity import User, Auth
 
-REQUEST_TOKEN_URL = 'http://www.ipernity.com/apps/oauth/request'
-USER_AUTH_URL = 'http://www.ipernity.com/apps/oauth/authorize'
-ACCESS_TOKEN_URL = 'http://www.ipernity.com/apps/oauth/access'
+USER_AUTH_URL = 'http://www.ipernity.com/apps/authorize'
+
+OAUTH_REQUEST_TOKEN_URL = 'http://www.ipernity.com/apps/oauth/request'
+OAUTH_USER_AUTH_URL = 'http://www.ipernity.com/apps/oauth/authorize'
+OAUTH_ACCESS_TOKEN_URL = 'http://www.ipernity.com/apps/oauth/access'
 
 AUTH_HANDLER = None
 
+log = logging.getLogger(__name__)
 
 class AuthError(Exception):
     pass
@@ -124,7 +128,7 @@ class AuthHandler(object):
         # auth url need api_sig
         api_sig = rest.sign_keys(self.api_secret, params)
         params['api_sig'] = api_sig
-        query = urllib.urlencode(params)
+        query = urllib.parse.urlencode(params)
         # composite url
         url = USER_AUTH_URL + '?' + query
         return url
@@ -148,7 +152,7 @@ class AuthHandler(object):
         return User(user_id=user_id)
 
 
-class WebAuthHanlder(AuthHandler):
+class WebAuthHandler(AuthHandler):
     '''WebAuthHanlder: auth class for web application
 
     Steps:
@@ -176,12 +180,14 @@ class DesktopAuthHandler(AuthHandler):
     '''
     def _get_frob(self):
         # get frob
+        log.debug('Calling API method auth.getFrob')
         resp = rest.call_api('auth.getFrob',
                              api_key=self.api_key,
                              api_secret=self.api_secret,
                              signed=True)
         # TODO: should we create a AUTH object here
         frob = resp['auth']['frob']
+        log.debug('Call returned %s', frob)
         return frob
 
     def get_auth_url(self):
@@ -189,22 +195,22 @@ class DesktopAuthHandler(AuthHandler):
             self.frob = self._get_frob()
         return self.compose_url(frob=self.frob)
 
-import urlparse
+#import urllib.parse
 import random
 import time
 
 
 def escape(s):
     """Escape a URL including any /."""
-    return urllib.quote(s, safe='~')
+    return urllib.parse.quote(s, safe='~')
 
 
 def _utf8_str(s):
     """Convert unicode to utf-8."""
-    if isinstance(s, unicode):
-        return s.encode("utf-8")
-    else:
-        return str(s)
+    #if isinstance(s, unicode):
+    #    return s.encode("utf-8")
+    #else:
+    return str(s)
 
 
 def generate_nonce(length=8):
@@ -261,12 +267,12 @@ class OAuthAuthHandler(AuthHandler):
         import hmac
         import binascii
 
-        try:
-            import hashlib  # 2.5
-            hashed = hmac.new(_utf8_str(key), raw, hashlib.sha1)
-        except:
-            import sha  # Deprecated
-            hashed = hmac.new(key, raw, sha)
+        #try:
+        import hashlib  # 2.5
+        hashed = hmac.new(bytes(key, 'ascii'), raw.encode('utf-8'), hashlib.sha1)
+        #except:
+        #    import sha  # Deprecated
+        #    hashed = hmac.new(key, raw, sha)
 
         # Calculate the digest base 64.
         return binascii.b2a_base64(hashed.digest())[:-1]
@@ -294,27 +300,30 @@ class OAuthAuthHandler(AuthHandler):
         oauth_signature = self._build_signature(url, params, token_secret)
         params['oauth_signature'] = oauth_signature
         # compose URL
-        req_url = url + '?' + urllib.urlencode(params)
+        req_url = url + '?' + urllib.parse.urlencode(params)
         # send request and save auth token
-        resp = urllib.urlopen(req_url)
-        oauth_token_resp = dict(urlparse.parse_qsl(resp.read()))
+        log.debug('Sending request ' + req_url)
+        resp = urllib.request.urlopen(req_url)
+        oauth_token_resp = dict(urllib.parse.parse_qsl(resp.read().decode('utf-8')))
+        #oauth_token_resp = urllib.parse.parse_qs(resp.read())
+        log.debug('Result: %s', oauth_token_resp)
         self.oauth_token = oauth_token_resp['oauth_token']
         self.oauth_token_secret = oauth_token_resp['oauth_token_secret']
 
     def get_auth_url(self):
         # first get a oauth token
-        self._request(REQUEST_TOKEN_URL)
+        self._request(OAUTH_REQUEST_TOKEN_URL)
         # compose the url
         params = {}
         params['oauth_token'] = self.oauth_token
         perms = {'perm_' + k: v for k, v in self.perms.items()}
         params.update(perms)
-        url = USER_AUTH_URL + '?' + urllib.urlencode(params)
+        url = OAUTH_USER_AUTH_URL + '?' + urllib.parse.urlencode(params)
         return url
 
     def verify(self):
         ''' verify the access token '''
-        self._request(ACCESS_TOKEN_URL, verify=True)
+        self._request(OAUTH_ACCESS_TOKEN_URL, verify=True)
 
     def getmeta(self):
         # Oauth need to save oauth_token_secret too

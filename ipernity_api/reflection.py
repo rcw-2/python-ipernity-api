@@ -1,8 +1,10 @@
+import logging
 from functools import wraps, partial
 from .methods import __methods__
 from .errors import IpernityError
 from .rest import call_api
 
+log = logging.getLogger(__name__)
 
 def _required_params(info):
     params = info.get('parameters', [])
@@ -60,8 +62,11 @@ def call(api_method):
             if not all([p in params for p in requires]):
                 raise IpernityError('parameters missing, required: %s'
                                     % ', '.join(requires))
+            log.debug('Calling API method %s', api_method)
             resp = request(**params)
-            return format_result(resp)
+            res = format_result(resp)
+            log.debug('Call returned %s', res)
+            return res
         wrapper.ipernity_method = api_method
         wrapper.static = False
         return wrapper
@@ -102,8 +107,11 @@ def static_call(api_method):
             if not all([p in params for p in requires]):
                 raise IpernityError('parameters missing, required: %s'
                                     % ','.join(requires))
+            log.debug('Calling (static) API method %s', api_method)
             resp = request(**params)
-            return format_result(resp)
+            res = format_result(resp)
+            log.debug('Call returned %s', res)
+            return res
         wrapper.ipernity_method = api_method
         wrapper.static = True
         return StaticCaller(wrapper)

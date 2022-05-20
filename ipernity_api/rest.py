@@ -1,3 +1,4 @@
+import logging
 import requests
 import hashlib
 from .errors import IpernityError, IpernityAPIError
@@ -6,6 +7,7 @@ from . import keys
 
 CACHE = None
 
+log = logging.getLogger(__name__)
 
 def enable_cache(cache_object=None):
     """ enable caching
@@ -61,7 +63,7 @@ def call_api(api_method, api_key=None, api_secret=None, signed=False,
     kwargs = _clean_params(kwargs)
 
     url = "http://api.ipernity.com/api/%s/%s" % (api_method, 'json')
-
+    
     from . import auth
     auth_handler = auth_handler or auth.AUTH_HANDLER
     if authed and not auth_handler:
@@ -77,9 +79,10 @@ def call_api(api_method, api_key=None, api_secret=None, signed=False,
     # send the request
     if http_post:  # POST
         if 'file' in kwargs:  # upload file handling
-            fpath = kwargs['file']
-            files = {'file': open(fpath, 'rb')}
-            r = requests.post(url, data=kwargs, files=files)
+            log.debug('sending file ' + kwargs['file'])
+            with open(kwargs['file'], 'rb') as fobj:
+                files = {'file': fobj}
+                r = requests.post(url, data=kwargs, files=files)
         else:
             r = requests.post(url, data=kwargs)
     else:  # GET
@@ -90,6 +93,7 @@ def call_api(api_method, api_key=None, api_secret=None, signed=False,
             r = CACHE.get(url) or requests.get(url, params=kwargs)
             if url not in CACHE:
                 CACHE.set(url, r)
+    log.debug('Request returned %s', r)
     r.raise_for_status()  # raise error if necessary, response_code != 2xx
 
     resp = r.json()
@@ -123,10 +127,10 @@ def sign_keys(api_secret, kwargs, method=None):
 
     Note: kwargs would be sorted in alphabetical order when convert to string
     '''
-    param_keys = kwargs.keys()
-    param_keys.sort()
+    param_keys = sorted(kwargs.keys())
+    param_keys
     sig_str = ''.join(['%s%s' % (k, kwargs[k]) for k in param_keys])
     # append method & api_secret
     sig_str = sig_str + (method if method else '') + api_secret
-    api_sig = hashlib.md5(sig_str).hexdigest()
+    api_sig = hashlib.md5(sig_str.encode('utf-8')).hexdigest()
     return api_sig

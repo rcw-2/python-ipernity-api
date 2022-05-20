@@ -1,5 +1,5 @@
 # stolen from http://code.activestate.com/recipes/146306/
-import httplib
+import http.client
 import mimetypes
 import urlparse
 
@@ -17,7 +17,7 @@ def post_multipart(host, selector, fields, files):
     Return the server's response page.
     """
     content_type, body = encode_multipart_formdata(fields, files)
-    h = httplib.HTTP(host)
+    h = http.client.HTTP(host)
     h.putrequest('POST', selector)
     h.putheader('content-type', content_type)
     h.putheader('content-length', str(len(body)))
@@ -31,7 +31,7 @@ def encode_multipart_formdata(fields, files):
     """
     fields is a sequence of (name, value) elements for regular form fields.
     files is a sequence of (name, filename, value) elements for data to be uploaded as files
-    Return (content_type, body) ready for httplib.HTTP instance
+    Return (content_type, body) ready for http.client.HTTP instance
     """
     BOUNDARY = '----------ThIs_Is_tHe_bouNdaRY_$'
     CRLF = '\r\n'

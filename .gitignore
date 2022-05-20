@@ -58,5 +58,5 @@ docs/_build/
 *.swo
 
 # protect privicate keys for testing
-ipernity_api/ipernity_keys.py
+ipernity_keys.py
 .tests.*

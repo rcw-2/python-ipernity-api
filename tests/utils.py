@@ -1,6 +1,9 @@
 import os
+import logging
+
 from ipernity_api import auth
 
+log = logging.getLogger(__name__)
 
 class TestCaseError(Exception):
     pass
@@ -17,41 +20,49 @@ def auth_in_browser(auth_cls, perms):
         2. we can setup a HTTP server to get such token
     '''
     port = 5678
-    redirt_url = "http://localhost:%s" % port
+    redirt_url = "http://localhost:%d/oac" % port
 
     # get auth url
     if auth_cls is auth.OAuthAuthHandler:
+        log.debug('Creating OAuth handler')
         auth_handler = auth_cls(callback=redirt_url, perms=perms)
     else:
+        log.debug('Creating auth handler')
         auth_handler = auth_cls(perms=perms)
     url = auth_handler.get_auth_url()
     # open url in browser
     import webbrowser
+    log.debug('Opening URL ' + url)
     webbrowser.open_new(url)
+    
+    if auth_cls is auth.DesktopAuthHandler:
+        input('Press <Enter> to continue...')
+    
+    else:
+        
+        # setup a temporary http server to get oath_token
+        from http.server import BaseHTTPRequestHandler, HTTPServer
 
-    # setup a temporary http server to get oath_token
-    import BaseHTTPServer
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                # parse url to get auth_token
+                import urllib.parse
+                p = urllib.parse.urlparse(self.path)
+                q = urllib.parse.parse_qs(p.query)
+                #auth_token = q['oauth_token'][0]
+                #auth_verifier = q['oauth_verifier'][0]
+                # save back to auth handler
+                auth_handler.verify()
+                # send response to webpage
+                self.send_response(200)
+                self.send_header("Content-type", "text/html")
+                self.end_headers()
+                self.wfile.write("Auth OK. Please close this page.")
+                self.wfile.close()
 
-    class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
-        def do_GET(self):
-            # parse url to get auth_token
-            import urlparse
-            p = urlparse.urlparse(self.path)
-            q = urlparse.parse_qs(p.query)
-            #auth_token = q['oauth_token'][0]
-            #auth_verifier = q['oauth_verifier'][0]
-            # save back to auth handler
-            auth_handler.verify()
-            # send response to webpage
-            self.send_response(200)
-            self.send_header("Content-type", "text/html")
-            self.end_headers()
-            self.wfile.write("Auth OK. Please close this page.")
-            self.wfile.close()
+        httpd = HTTPServer(("", port), Handler)
 
-    httpd = BaseHTTPServer.HTTPServer(("", port), Handler)
-
-    httpd.handle_request()  # just handle on request
+        httpd.handle_request()  # just handle on request
 
     return auth_handler
 

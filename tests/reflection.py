@@ -15,7 +15,7 @@ class ReflectionTest(TestCase):
                 return kwargs, lambda k: k['hello']
 
         t = Testing()
-        self.assertEquals('hello', t.echo(echo='hello'))
+        self.assertEqual('hello', t.echo(echo='hello'))
         self.assertIn('hello', t.hello())
 
     def test_static_call_decorator(self):
@@ -37,8 +37,8 @@ class ReflectionTest(TestCase):
                 return kwargs, lambda k: k['echo']
 
         # required paramters checking
-        with self.assertRaisesRegexp(IpernityError, 'missing'):
+        with self.assertRaisesRegex(IpernityError, 'missing'):
             Test.static_test()
         t = Test()
-        with self.assertRaisesRegexp(IpernityError, 'missing'):
+        with self.assertRaisesRegex(IpernityError, 'missing'):
             t.test()
