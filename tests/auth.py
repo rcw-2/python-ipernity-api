@@ -52,6 +52,7 @@ class AuthTest(TestCase):
         user = handler.getUser()
         self.assertIsInstance(user, ipernity.User)
 
+    # Ipernety OAuth strips port from callback URL
     def _test_oauth(self):
         perms = {'doc': 'delete',
                  'blog': 'delete',

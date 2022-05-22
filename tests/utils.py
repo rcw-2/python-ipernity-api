@@ -33,6 +33,7 @@ def auth_in_browser(auth_cls, perms):
     # open url in browser
     import webbrowser
     log.debug('Opening URL ' + url)
+    print('Add ":%d" after "localhost" in browser URL' % port)
     webbrowser.open_new(url)
     
     if auth_cls is auth.DesktopAuthHandler:
@@ -46,9 +47,9 @@ def auth_in_browser(auth_cls, perms):
         class Handler(BaseHTTPRequestHandler):
             def do_GET(self):
                 # parse url to get auth_token
-                import urllib.parse
-                p = urllib.parse.urlparse(self.path)
-                q = urllib.parse.parse_qs(p.query)
+                #import urllib.parse
+                #p = urllib.parse.urlparse(self.path)
+                #q = urllib.parse.parse_qs(p.query)
                 #auth_token = q['oauth_token'][0]
                 #auth_verifier = q['oauth_verifier'][0]
                 # save back to auth handler

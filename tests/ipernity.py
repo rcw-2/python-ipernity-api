@@ -477,6 +477,7 @@ class IpernityTest(TestCase):
 
         docs = ipernity.Explore.docs_homepage()
         self.assertTrue(all([isinstance(doc, ipernity.Doc) for doc in docs]))
-
-        groups = ipernity.Explore.groups_getRandom(count = 5)
-        self.assertTrue(all([isinstance(g, ipernity.Group) for g in groups]))
+        
+        # explore.groups.getRandom seems to be defunct:
+        #groups = ipernity.Explore.groups_getRandom(count = 5)
+        #self.assertTrue(all([isinstance(g, ipernity.Group) for g in groups]))
