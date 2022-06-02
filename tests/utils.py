@@ -38,6 +38,7 @@ def auth_in_browser(auth_cls, perms):
     
     if auth_cls is auth.DesktopAuthHandler:
         input('Press <Enter> to continue...')
+        auth_handler.getToken()
     
     else:
         

@@ -60,7 +60,7 @@ class AuthHandler(object):
             raise AuthError('No api_key or api_secret given')
 
         if perms:  # sanity check for permissions
-            perm_types = ['doc', 'blog', 'network', 'profile']
+            perm_types = ['doc', 'blog', 'network', 'post', 'profile']
             perm_modes = ['read', 'write', 'delete']
             for k in perms.keys():
                 if k not in perm_types:
@@ -93,8 +93,9 @@ class AuthHandler(object):
 
     @staticmethod
     def load(fname):
-        ''' Hanlder loaded from file '''
-        data = json.loads(open(fname).read())
+        ''' Handler loaded from file '''
+        with open(fname) as auth:
+            data = json.loads(auth.read())
         meta = data['meta']
         classname = data['class']
         # find the class through globals() and init with **meta, then return
@@ -133,14 +134,17 @@ class AuthHandler(object):
         url = USER_AUTH_URL + '?' + query
         return url
 
-    def getToken(self, frob):
+    def getToken(self, frob=None):
         ''' get token from frob '''
+        if frob is None:
+            frob = self.frob
         resp = rest.call_api('auth.getToken',
                              api_key=self.api_key,
                              api_secret=self.api_secret,
                              frob=frob,
                              signed=True)
-        return resp['auth']
+        self.auth_token = resp['auth']
+        return self.auth_token
 
     def getUser(self):
         ''' get User of this AuthHanlder '''
@@ -189,7 +193,7 @@ class DesktopAuthHandler(AuthHandler):
         frob = resp['auth']['frob']
         log.debug('Call returned %s', frob)
         return frob
-
+    
     def get_auth_url(self):
         if not self.frob:
             self.frob = self._get_frob()

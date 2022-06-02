@@ -68,13 +68,13 @@ def call_api(api_method, api_key=None, api_secret=None, signed=False,
     auth_handler = auth_handler or auth.AUTH_HANDLER
     if authed and not auth_handler:
         raise IpernityError('no auth_handler provided')
-    elif auth_handler:
-        if isinstance(auth_handler, auth.OAuthAuthHandler):
+    elif auth_handler and isinstance(auth_handler, auth.OAuthAuthHandler):
             kwargs = auth_handler.sign_params(url, kwargs, http_post)
-    else:
-        if signed:  # signature handling
-            api_sig = sign_keys(api_secret, kwargs, api_method)
-            kwargs['api_sig'] = api_sig
+    elif signed or authed:  # signature handling
+        if authed:
+            kwargs['auth_token'] = auth_handler.auth_token['token']
+        api_sig = sign_keys(api_secret, kwargs, api_method)
+        kwargs['api_sig'] = api_sig
 
     # send the request
     if http_post:  # POST
