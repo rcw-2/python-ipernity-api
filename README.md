@@ -14,13 +14,8 @@ Python wrapper for ipernity.com API, inspired by [python-flickr-api](https://git
 
 
 ## Requirements
-By far, just support Python2.
-
-No extra library or modules dependence, Python itself is enough.
-
-```
-python 2.6+
-```
+* Python 3
+* [Requests](https://requests.readthedocs.io/)
 
 
 ## Installation
@@ -30,8 +25,8 @@ python 2.6+
 ```
 git clone https://github.com/oneyoung/python-ipernity-api.git
 cd python-ipernity-api
-sudo python2 setup.py install  # for all user
-python2 setup.py install --user # or for current user
+sudo python3 setup.py install  # for all user
+python3 setup.py install --user # or for current user
 ```
 
 #### From Pypi
